@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Simulador de Auditoria Housekeeping – Fahrwerk</title>
+<style>
+:root{
+  --vw-dark:#001E50; --vw-blue:#0040C1; --bg:#1a1a2e;
+  --green:#00c853; --yellow:#ffd600; --orange:#ff9100; --red:#d50000;
+  --card:#22224a; --card2:#2a2a55; --text:#eef1f8; --muted:#9aa3c7;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+header{background:linear-gradient(135deg,var(--vw-dark),var(--vw-blue));padding:14px 16px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+header h1{font-size:1.05rem;display:flex;align-items:center;gap:8px}
+.hsub{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:.75rem;color:#cfd8ff}
+.container{max-width:760px;margin:0 auto;padding:14px}
+.card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border-radius:12px;padding:12px;text-align:center}
+.kpi .ic{font-size:1.3rem}
+.kpi .val{font-size:1.5rem;font-weight:700;margin-top:2px}
+.kpi .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.btn{display:block;width:100%;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:600;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:10px}
+.btn-primary{background:linear-gradient(135deg,var(--vw-blue),#0055ff)}
+.btn-dark{background:#141432;border:1px solid #3a3a70}
+.btn-green{background:var(--green);color:#00300f}
+.btn-purple{background:linear-gradient(135deg,#6a1b9a,#8e24aa)}
+.btn-red{background:var(--red)}
+.btn:active{transform:scale(.98)}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+input[type=text],select,textarea{width:100%;background:#141432;border:1px solid #3a3a70;border-radius:8px;color:var(--text);padding:11px;font-size:.95rem;font-family:inherit;margin-bottom:10px}
+textarea{resize:vertical;min-height:70px}
+label.f{display:block;font-size:.75rem;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.cat-title{display:flex;align-items:center;gap:8px;font-size:.95rem;font-weight:700;margin:16px 0 8px;color:#cfd8ff}
+.cat-title .bar{flex:1;height:2px;background:#3a3a70;border-radius:2px}
+.item{background:var(--card);border-radius:10px;padding:12px;margin-bottom:8px}
+.item .nm{font-size:.9rem;font-weight:600;margin-bottom:8px}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.qtyrow{display:flex;align-items:center;gap:10px}
+.qbtn{width:44px;height:44px;border-radius:10px;border:1px solid #3a3a70;background:#141432;color:var(--text);font-size:1.4rem;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;line-height:1}
+.qbtn:active{transform:scale(.94)}
+.qval{width:52px;text-align:center;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}
+.qlbl{flex:1;text-align:center;border-radius:8px;padding:9px 4px;font-size:.78rem;font-weight:600;border:1px solid #3a3a70;background:#141432;color:var(--muted)}
+.qlbl.sel-0{background:#003d1a;border-color:var(--green);color:#b9f6ca}
+.qlbl.sel-2{background:#3d3a00;border-color:var(--yellow);color:#fff59d}
+.qlbl.sel-5{background:#3d2600;border-color:var(--orange);color:#ffcc80}
+.qlbl.sel-10{background:#3d0000;border-color:var(--red);color:#ff8a80}
+.opt{border:1px solid #3a3a70;background:#141432;border-radius:8px;padding:8px 2px;text-align:center;font-size:.68rem;cursor:pointer;color:var(--muted);font-family:inherit;line-height:1.25}
+.opt b{display:block;font-size:.78rem;color:var(--text)}
+.opt.sel-0{background:#003d1a;border-color:var(--green);color:#b9f6ca}
+.opt.sel-0 b{color:var(--green)}
+.opt.sel-2{background:#3d3a00;border-color:var(--yellow)}
+.opt.sel-2 b{color:var(--yellow)}
+.opt.sel-5{background:#3d2600;border-color:var(--orange)}
+.opt.sel-5 b{color:var(--orange)}
+.opt.sel-10{background:#3d0000;border-color:var(--red)}
+.opt.sel-10 b{color:#ff8a80}
+.progressbar{height:8px;background:#141432;border-radius:4px;overflow:hidden;margin:8px 0}
+.progressbar>div{height:100%;background:var(--vw-blue);transition:width .3s}
+.scorehead{position:sticky;top:64px;z-index:40;background:var(--bg);padding:8px 0 4px}
+.scorepill{display:flex;justify-content:space-between;align-items:center;background:var(--card2);border-radius:10px;padding:10px 14px;font-size:.85rem}
+.scorepill .sc{font-size:1.3rem;font-weight:800}
+.sem{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-2px}
+.result-big{text-align:center;padding:22px 14px}
+.result-big .pts{font-size:3.4rem;font-weight:800;line-height:1}
+.result-big .cls{font-size:1.15rem;font-weight:700;margin-top:8px}
+.result-big .desc{font-size:.85rem;color:var(--muted);margin-top:6px}
+.radio-line,.check-line{display:flex;align-items:center;gap:10px;padding:9px 10px;background:#141432;border:1px solid #3a3a70;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:.87rem}
+.radio-line input,.check-line input{width:18px;height:18px;accent-color:var(--vw-blue);flex-shrink:0}
+.hist{display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer}
+.hist .who{font-weight:600;font-size:.9rem}
+.hist .meta{font-size:.72rem;color:var(--muted);margin-top:2px}
+.hist .pt{font-size:1.25rem;font-weight:800}
+.tag{display:inline-block;font-size:.68rem;padding:2px 8px;border-radius:10px;background:#141432;color:var(--muted);margin:2px 3px 0 0}
+.crit{background:#3d0000;border:1px solid var(--red);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:.85rem;display:flex;justify-content:space-between}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#00c853;color:#00300f;padding:11px 20px;border-radius:24px;font-weight:600;font-size:.85rem;opacity:0;transition:all .3s;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.5);max-width:90%;text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:18px;max-height:88vh;overflow-y:auto}
+.modal h3{display:flex;justify-content:space-between;align-items:center;font-size:1rem;margin-bottom:14px}
+.modal h3 button{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer}
+.msec{font-size:.7rem;color:var(--muted);letter-spacing:1px;margin:14px 0 8px;font-weight:700}
+.storbar{height:8px;background:#141432;border-radius:4px;overflow:hidden;margin:6px 0}
+.storbar>div{height:100%;background:var(--vw-blue)}
+.warn{background:#3d3a00;border:1px solid var(--yellow);color:#fff59d;border-radius:8px;padding:8px 10px;font-size:.78rem;margin-top:8px}
+.timerbox{font-variant-numeric:tabular-nums;font-weight:700}
+@media(min-width:600px){.kpis{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 Simulador de Auditoria Housekeeping</h1>
+  <div class="hsub"><span>Fahrwerk · 2º Turno</span><span id="clock">--:--:--</span></div>
+</header>
+
+<div class="container" id="app"></div>
+
+<div id="toast"></div>
+
+<!-- Backup modal -->
+<div class="modal-bg" id="backupModal">
+  <div class="modal">
+    <h3>💾 Backup do HUB <button type="button" id="closeBackup">✕</button></h3>
+    <div class="msec">ARMAZENAMENTO</div>
+    <div class="storbar"><div id="storFill" style="width:2%"></div></div>
+    <div style="font-size:.78rem;color:var(--muted)" id="storInfo">localStorage: calculando…</div>
+    <div class="warn" id="storWarn" style="display:none">⚠️ Nenhum backup realizado ainda. Recomenda-se exportar seus dados.</div>
+    <div class="msec">EXPORTAR</div>
+    <button type="button" class="btn btn-dark" id="btnExportJson">↓ Arquivo .json</button>
+    <button type="button" class="btn btn-purple" id="btnSaveDevice">📦 Salvar no dispositivo</button>
+    <div class="msec">RESTAURAR</div>
+    <button type="button" class="btn btn-dark" id="btnRestoreFile">📁 De arquivo .json</button>
+    <button type="button" class="btn btn-dark" id="btnRestoreDevice">📦 Do dispositivo</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+<input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
+
+<script>
+'use strict';
+/* ============ DADOS ============ */
+const STORAGE_KEY='fahrwerk_housekeeping_v1';
+const DEVICE_KEY='fahrwerk_housekeeping_device_v1';
+/* ⚠️ NÚMERO DO MONITOR: coloque aqui seu WhatsApp com DDI+DDD, só dígitos. Ex: '5512987654321'
+   Assim, TODOS os envios dos operadores já abrem direto na sua conversa.
+   Também pode ser configurado dentro do app, no Painel do Monitor. */
+const MONITOR_PHONE='';
+function monitorPhone(){
+ const p=(state.monitorPhone||MONITOR_PHONE||'').replace(/\D/g,'');
+ return p;
+}
+function waUrl(text){
+ const p=monitorPhone();
+ return 'https://wa.me/'+(p?p:'')+'?text='+encodeURIComponent(text);
+}
+
+const DEFAULT_CATEGORIES=[{"id":"limpeza","icon":"🧹","name":"Limpeza","items":[{"n":"Parafusos e porcas no chão","m":"nivel"},{"n":"Tampinhas no chão","m":"nivel"},{"n":"Tampões no chão","m":"nivel"},{"n":"Papel no chão","m":"nivel"},{"n":"Lixo","m":"nivel"},{"n":"Sujeira","m":"nivel"},{"n":"Óleo","m":"qtd"},{"n":"Goteiras","m":"qtd"},{"n":"Peças abandonadas","m":"qtd"},{"n":"Mesa do café","m":"nivel"},{"n":"Mesa do refugo","m":"nivel"},{"n":"skillits","m":"nivel"},{"n":"Mesa da ficha","m":"nivel"},{"n":"Ventiladores","m":"nivel"},{"n":"Prateleiras","m":"nivel"},{"n":"Microondas","m":"nivel"}]},{"id":"organizacao","icon":"📦","name":"Organização","items":[{"n":"Ferramentas fora do local","m":"qtd"},{"n":"Objetos sobre prateleiras e caixas de peças","m":"qtd"},{"n":"Copos","m":"qtd"},{"n":"Garrafas","m":"qtd"},{"n":"Luvas","m":"qtd"},{"n":"Potes","m":"qtd"},{"n":"Celular carregando","m":"qtd"},{"n":"Lanches em locais inapropriado","m":"qtd"}]},{"id":"seguranca","icon":"🦺","name":"Segurança","items":[{"n":"Objetos com risco de tropeço","m":"qtd"},{"n":"Óleo no chão","m":"qtd"},{"n":"Uso de celular","m":"qtd"},{"n":"Cabelo comprido solto","m":"qtd"}]},{"id":"padronizacao","icon":"📐","name":"Padronização (desvios)","items":[{"n":"Posto desorganizado","m":"nivel"},{"n":"Materiais não identificados","m":"nivel"},{"n":"Equipamentos sujos","m":"nivel"},{"n":"Padrão de organização faixas no chão","m":"nivel"}]}];
+function getCats(){return state.categories&&state.categories.length?state.categories:DEFAULT_CATEGORIES;}
+
+/* Perguntas de reflexão padrão — tipos: 'radio' (uma escolha), 'check' (múltipla escolha), 'texto' (resposta livre) */
+const DEFAULT_QUESTIONS=[{"id":"q1","type":"radio","text":"Quem você acredita ser o principal responsável pelos deméritos encontrados?","options":["A fábrica","O método de trabalho","Os operadores da operação","A liderança","Todos que trabalham na área","Não existe um culpado; todos somos responsáveis"]},{"id":"q2","type":"radio","text":"A maioria desses problemas poderia ter sido evitada?","options":["Sim","Não"]},{"id":"q3","type":"radio","text":"Se você trabalhasse nesta operação, deixaria o posto dessa maneira?","options":["Sim","Não"]},{"id":"q4","type":"radio","text":"Pequenas atitudes individuais podem impactar uma auditoria?","options":["Sim","Não"]},{"id":"q5","type":"texto","text":"O que mais chamou sua atenção durante a auditoria?","options":[]},{"id":"q6","type":"texto","text":"Qual foi o maior problema encontrado?","options":[]},{"id":"q7","type":"texto","text":"O que faria imediatamente para melhorar este setor?","options":[]},{"id":"q8","type":"check","text":"Manter um bom Housekeeping melhora:","options":["Segurança","Qualidade","Produtividade","Ergonomia","Clima da equipe","Todos os itens acima"]},{"id":"q1783771644896","type":"radio","text":"Housekeeping é importante?","options":["Sim","Não"]},{"id":"q1783771812595","type":"radio","text":"Qual o seu nível de comprometimento com o housekeeping?","options":["Baixo","Médio","Alto"]},{"id":"q1783771961959","type":"radio","text":"Qual avaliação vc faz do Housekeeping auditado no setor ?","options":["Ruim","Bom","Ótimo"]},{"id":"q1783772161158","type":"radio","text":"Qual foi o rigor do seu nível como auditor?","options":["Superficial","Adequada","Rigorosa"]},{"id":"q1783773064386","type":"radio","text":"Na sua avaliação, qual seria o resultado da auditoria?","options":["Aprovado","Aprovado, com melhorias a ser feitas","Reprovado"]},{"id":"q1783774896664","type":"radio","text":"Qual foi sua experiencia auditando o setor?","options":["Regular","Boa","Gostei da experiencia"]}];
+function getQuestions(){return state.questions&&state.questions.length?state.questions:DEFAULT_QUESTIONS;}
+function afterRestore(){
+ if(!state.categories||!state.categories.length){
+  state.categories=JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+ }
+ normCats();
+ ensureQuestions();
+}
+function ensureQuestions(){
+ if(!state.questions||!state.questions.length){
+  state.questions=JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+ }
+ state.questions.forEach(q=>{
+  if(!['radio','check','texto'].includes(q.type))q.type='texto';
+  if(!Array.isArray(q.options))q.options=[];
+ });
+}
+/* Migra itens antigos (string) para objeto {n:nome, m:'qtd'|'nivel'} — cada item tem seu próprio modo */
+function normCats(){
+ getCats().forEach(c=>{
+  c.items=c.items.map(it=>typeof it==='string'?{n:it,m:(state.mode==='nivel'?'nivel':'qtd')}:it);
+  c.items.forEach(it=>{if(it.m!=='qtd'&&it.m!=='nivel')it.m='qtd';});
+ });
+}
+const LEVELS=[{v:0,l:'Não encontrado',s:'0'},{v:2,l:'Pouco',s:'-2'},{v:5,l:'Médio',s:'-5'},{v:10,l:'Bastante',s:'-10'}];
+/* Quantidade → demérito: 0 = não encontrado, 1 = pouco (-2), 2 = médio (-5), 3+ = bastante (-10) */
+function qtyToPenalty(q){return q<=0?0:q===1?2:q===2?5:10;}
+function qtyLabel(q){
+ if(q<=0)return{t:'Não encontrado · 0',c:'sel-0'};
+ if(q===1)return{t:'Pouco · −2',c:'sel-2'};
+ if(q===2)return{t:'Médio · −5',c:'sel-5'};
+ return{t:'Bastante · −10',c:'sel-10'};
+}
+
+function classify(p){
+ if(p>=95)return{emoji:'🟢',name:'Excelente',color:'var(--green)',desc:'O setor demonstra elevado nível de organização e disciplina.'};
+ if(p>=90)return{emoji:'🟢',name:'Muito Bom',color:'var(--green)',desc:'Pequenas oportunidades de melhoria.'};
+ if(p>=80)return{emoji:'🟡',name:'Bom',color:'var(--yellow)',desc:'Existem alguns desvios que precisam ser tratados.'};
+ if(p>=70)return{emoji:'🟠',name:'Atenção',color:'var(--orange)',desc:'O Housekeeping precisa evoluir.'};
+ return{emoji:'🔴',name:'Crítico',color:'var(--red)',desc:'O setor necessita de ações imediatas para restabelecer o padrão esperado.'};
+}
+
+/* ============ ESTADO ============ */
+let state={version:1,audits:[],current:null,lastBackup:null,categories:null,mode:'nivel',questions:null,pin:'1234'}; /* mode: 'qtd' | 'nivel' */
+let monitorUnlocked=false; /* desbloqueio válido apenas na sessão atual */
+/* Código compacto para envio via WhatsApp (UTF-8 seguro) */
+function b64enc(s){return btoa(unescape(encodeURIComponent(s)));}
+function b64dec(s){return decodeURIComponent(escape(atob(s)));}
+let screen='home'; // home | preview | audit | reflect | result | editor | monitor
+let resultAudit=null;
+let timerInt=null;
+
+function load(){
+ try{
+  const raw=localStorage.getItem(STORAGE_KEY);
+  if(raw){
+   const d=JSON.parse(raw);
+   if(d&&d.version===1){state=Object.assign(state,d);}
+  }
+ }catch(e){console.error('load',e);}
+ if(!state.categories||!state.categories.length){
+  state.categories=JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+ }
+ if(state.mode!=='qtd'&&state.mode!=='nivel')state.mode='qtd';
+ if(!state.pin)state.pin='1234';
+ normCats();
+ ensureQuestions();
+ if(state.current)screen=state.current.startTs?'audit':'preview';
+}
+function save(){
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){toast('⚠️ Erro ao salvar: armazenamento cheio');}
+}
+function toast(msg){
+ const t=document.getElementById('toast');
+ t.textContent=msg;t.classList.add('show');
+ clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2500);
+}
+function fmtTime(ms){
+ const s=Math.floor(ms/1000);
+ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+function nowHMS(){const d=new Date();return d.toLocaleTimeString('pt-BR');}
+
+/* ============ CÁLCULO ============ */
+function calc(answers,qty){
+ let lost=0,nc=0;const crits=[];
+ getCats().forEach(c=>c.items.forEach(it=>{
+  const key=c.id+'|'+it.n;
+  const v=answers[key];
+  if(v===undefined)return;
+  if(v>0){nc++;lost+=v;if(v>=5)crits.push({item:it.n,cat:c.name,v:v,qty:qty?qty[key]:undefined});}
+ }));
+ crits.sort((a,b)=>b.v-a.v);
+ return{score:Math.max(0,100-lost),lost:lost,nc:nc,crits:crits};
+}
+function answeredCount(a){return Object.keys(a).length;}
+function totalItems(){return getCats().reduce((s,c)=>s+c.items.length,0);}
+
+/* ============ RENDER ============ */
+const app=document.getElementById('app');
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function render(){
+ clearInterval(timerInt);
+ if(screen==='home')renderHome();
+ else if(screen==='preview')renderPreview();
+ else if(screen==='audit')renderAudit();
+ else if(screen==='reflect')renderReflect();
+ else if(screen==='result')renderResult();
+ else if(screen==='editor')renderEditor();
+ else if(screen==='monitor')renderMonitor();
+ bindCommon();
+}
+
+function renderHome(){
+ const n=state.audits.length;
+ const avg=n?Math.round(state.audits.reduce((s,a)=>s+a.score,0)/n):'--';
+ const last=n?state.audits[n-1].score:'--';
+ const avgTime=n?fmtTime(state.audits.reduce((s,a)=>s+a.durationMs,0)/n):'--:--';
+ let histHtml=state.audits.slice().reverse().map(a=>{
+  const cl=classify(a.score);
+  return `<div class="hist" data-view="${a.id}">
+    <div><div class="who">${cl.emoji} ${esc(a.auditor)}</div>
+    <div class="meta">${new Date(a.date).toLocaleDateString('pt-BR')} · ${fmtTime(a.durationMs)} · ${a.nc} NC</div></div>
+    <div class="pt" style="color:${cl.color}">${a.score}</div></div>`;
+ }).join('')||'<div style="text-align:center;color:var(--muted);font-size:.85rem;padding:14px">Nenhuma auditoria realizada ainda. Escolha um operador e inicie a primeira!</div>';
+
+ app.innerHTML=`
+  <div class="kpis">
+   <div class="kpi"><div class="ic">📋</div><div class="val">${n}</div><div class="lbl">Auditorias</div></div>
+   <div class="kpi"><div class="ic">📊</div><div class="val">${avg}</div><div class="lbl">Média</div></div>
+   <div class="kpi"><div class="ic">🎯</div><div class="val">${last}</div><div class="lbl">Última</div></div>
+   <div class="kpi"><div class="ic">⏱️</div><div class="val" style="font-size:1.1rem;padding-top:6px">${avgTime}</div><div class="lbl">Tempo médio</div></div>
+  </div>
+  <div class="card">
+   <label class="f">Nome do operador auditor</label>
+   <input type="text" id="auditorName" placeholder="Ex: João Silva" autocomplete="off">
+   <label class="f">Sub-setor auditado (opcional)</label>
+   <input type="text" id="subSector" placeholder="Ex: Eixo dianteiro" autocomplete="off">
+   <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Modo de avaliação: <b style="color:var(--text)">definido item a item</b> (🔢 quantidade ou 🎯 nível) · configuração no Painel do Monitor</div>
+   <button type="button" class="btn btn-primary" id="btnStart">👀 Ver itens e preparar auditoria</button>
+  </div>
+  <div class="row">
+   <button type="button" class="btn btn-dark" id="btnAtualizar">🔄 Atualizar</button>
+   <button type="button" class="btn btn-dark" id="btnBackup">💾 Backup</button>
+   <button type="button" class="btn btn-green" id="btnWhats">📲 WhatsApp</button>
+  </div>
+  <button type="button" class="btn btn-purple" id="btnMonitor">🔐 Painel do Monitor</button>
+  <div class="cat-title">📜 Histórico <span class="bar"></span></div>
+  ${histHtml}`;
+
+ const bs=document.getElementById('btnStart');
+ bs.addEventListener('click',()=>{
+  const name=document.getElementById('auditorName').value.trim();
+  if(!name){toast('⚠️ Informe o nome do auditor');return;}
+  state.current={id:'a'+Date.now(),auditor:name,sub:document.getElementById('subSector').value.trim(),startTs:null,answers:{},qty:{},reflections:{}};
+  save();screen='preview';render();
+ });
+ app.querySelectorAll('.hist').forEach(h=>h.addEventListener('click',()=>{
+  const a=state.audits.find(x=>x.id===h.dataset.view);
+  if(a){resultAudit=a;screen='result';render();}
+ }));
+ document.getElementById('btnMonitor').addEventListener('click',()=>{
+  if(monitorUnlocked){screen='monitor';render();return;}
+  const p=prompt('🔐 Digite o PIN do monitor:');
+  if(p===null)return;
+  if(p===state.pin){monitorUnlocked=true;screen='monitor';render();}
+  else toast('⛔ PIN incorreto');
+ });
+}
+
+/* ============ PAINEL DO MONITOR ============ */
+function importCodes(text){
+ const re=/HK1\|([A-Za-z0-9+/=]+)/g;
+ let m,found=0,added=0,dup=0,err=0;
+ const ids=new Set(state.audits.map(a=>a.id));
+ while((m=re.exec(text))!==null){
+  found++;
+  try{
+   const a=JSON.parse(b64dec(m[1]));
+   if(!a||!a.id||typeof a.score!=='number')throw new Error('inválido');
+   if(ids.has(a.id)){dup++;continue;}
+   ids.add(a.id);
+   state.audits.push(a);added++;
+  }catch(e){err++;}
+ }
+ state.audits.sort((x,y)=>new Date(x.date)-new Date(y.date));
+ if(added)save();
+ return{found,added,dup,err};
+}
+
+function renderMonitor(){
+ const n=state.audits.length;
+ const avg=n?Math.round(state.audits.reduce((s,a)=>s+a.score,0)/n):'--';
+ /* ranking por auditor */
+ const byAud={};
+ state.audits.forEach(a=>{
+  if(!byAud[a.auditor])byAud[a.auditor]={n:0,sum:0};
+  byAud[a.auditor].n++;byAud[a.auditor].sum+=a.score;
+ });
+ const rank=Object.keys(byAud).map(k=>({name:k,n:byAud[k].n,avg:Math.round(byAud[k].sum/byAud[k].n)})).sort((a,b)=>b.n-a.n||b.avg-a.avg);
+ const rankHtml=rank.length?rank.map((r0,i)=>`<div class="hist" style="cursor:default"><div><div class="who">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'} ${esc(r0.name)}</div><div class="meta">${r0.n} auditoria(s)</div></div><div style="display:flex;align-items:center;gap:10px"><div class="pt" style="color:${classify(r0.avg).color}">${r0.avg}</div><button type="button" class="opt mon-delaud" data-aud="${esc(r0.name)}" style="width:44px;padding:8px 2px;color:#ff8a80"><b>🗑️</b></button></div></div>`).join(''):'<div style="color:var(--muted);font-size:.85rem">Sem auditorias ainda.</div>';
+
+ /* análise das perguntas de escolha */
+ let qHtml='';
+ getQuestions().forEach((q,qi0)=>{
+  if(q.type==='texto')return;
+  const counts={};let total=0;
+  state.audits.forEach(a=>{
+   const v=a.reflections?a.reflections[q.id]:undefined;
+   if(v===undefined)return;
+   const arr=Array.isArray(v)?v:[v];
+   arr.forEach(o=>{counts[o]=(counts[o]||0)+1;total++;});
+  });
+  if(!total)return;
+  qHtml+=`<div class="card"><div style="font-size:.85rem;font-weight:600;margin-bottom:8px">${qi0+1}. ${esc(q.text)}</div>`;
+  Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).forEach(o=>{
+   const pct=Math.round(counts[o]/total*100);
+   qHtml+=`<div style="font-size:.78rem;margin-bottom:5px"><div style="display:flex;justify-content:space-between"><span>${esc(o)}</span><b>${counts[o]} (${pct}%)</b></div><div class="progressbar" style="margin:3px 0 0"><div style="width:${pct}%"></div></div></div>`;
+  });
+  qHtml+=`</div>`;
+ });
+ if(!qHtml)qHtml='<div class="card" style="color:var(--muted);font-size:.85rem">As análises das perguntas de reflexão aparecem aqui conforme as auditorias são importadas.</div>';
+
+ /* respostas livres recentes */
+ let freeHtml='';
+ const allQs=getQuestions();
+ allQs.forEach((q,qi0)=>{
+  if(q.type!=='texto')return;
+  const answers=state.audits.map(a=>({who:a.auditor,v:a.reflections?a.reflections[q.id]:''})).filter(x=>x.v&&x.v.trim());
+  if(!answers.length)return;
+  freeHtml+=`<div class="card"><div style="font-size:.85rem;font-weight:600;margin-bottom:8px">${qi0+1}. ${esc(q.text)}</div>`+
+   answers.slice(-6).reverse().map(x=>`<div style="font-size:.8rem;background:#141432;border-radius:8px;padding:8px 10px;margin-bottom:6px">"${esc(x.v)}"<div style="color:var(--muted);font-size:.7rem;margin-top:3px">— ${esc(x.who)}</div></div>`).join('')+`</div>`;
+ });
+
+ app.innerHTML=`
+  <div class="card"><b>🔐 Painel do Monitor</b>
+  <div style="font-size:.8rem;color:var(--muted);margin-top:4px">Receba os resultados enviados pelos operadores no WhatsApp, importe e acompanhe as análises consolidadas.</div></div>
+
+  <div class="card">
+   <b style="font-size:.9rem">📥 Receber resultados do WhatsApp</b>
+   <div style="font-size:.78rem;color:var(--muted);margin:6px 0 10px">Cole abaixo a(s) mensagem(ns) recebidas — pode colar várias de uma vez. O app localiza os códigos "HK1|" automaticamente e ignora duplicados.</div>
+   <textarea id="monPaste" placeholder="Cole aqui as mensagens do WhatsApp..." style="min-height:110px"></textarea>
+   <button type="button" class="btn btn-primary" id="monImport">📥 Importar resultados</button>
+  </div>
+
+  <div class="kpis">
+   <div class="kpi"><div class="ic">📋</div><div class="val">${n}</div><div class="lbl">Auditorias</div></div>
+   <div class="kpi"><div class="ic">📊</div><div class="val">${avg}</div><div class="lbl">Média geral</div></div>
+   <div class="kpi"><div class="ic">👥</div><div class="val">${rank.length}</div><div class="lbl">Auditores</div></div>
+   <div class="kpi"><div class="ic">⚠️</div><div class="val">${state.audits.reduce((s,a)=>s+(a.nc||0),0)}</div><div class="lbl">NCs no total</div></div>
+  </div>
+
+  <div class="cat-title">🏆 Auditores (por participação) <span class="bar"></span></div>
+  ${rankHtml}
+
+  <div class="cat-title">📊 Análise das reflexões <span class="bar"></span></div>
+  ${qHtml}
+  ${freeHtml?'<div class="cat-title">💬 Respostas livres recentes <span class="bar"></span></div>'+freeHtml:''}
+
+  <div class="cat-title">🔧 Configurações do monitor <span class="bar"></span></div>
+  <div class="card">
+   <div style="font-size:.8rem;margin-bottom:8px">📱 WhatsApp do monitor: <b>${monitorPhone()?'+'+monitorPhone():'não configurado'}</b>
+   <div style="font-size:.72rem;color:var(--muted);margin-top:3px">Com o número configurado, os envios dos operadores abrem direto na sua conversa.</div></div>
+   <button type="button" class="btn btn-purple" id="monEditor">⚙️ Editar itens e perguntas da auditoria</button>
+   <button type="button" class="btn btn-dark" id="monSetPhone">📱 Definir número do WhatsApp</button>
+   <button type="button" class="btn btn-dark" id="monChangePin">🔑 Alterar PIN do monitor</button>
+   <button type="button" class="btn btn-red" id="monClear">🗑️ Apagar todas as auditorias</button>
+  </div>
+  <button type="button" class="btn btn-primary" id="monBack">🏠 Voltar ao início</button>`;
+
+ document.getElementById('monImport').addEventListener('click',()=>{
+  const txt=document.getElementById('monPaste').value;
+  if(!txt.trim()){toast('⚠️ Cole as mensagens do WhatsApp primeiro');return;}
+  const r=importCodes(txt);
+  if(!r.found){toast('⚠️ Nenhum código "HK1|" encontrado no texto');return;}
+  render();
+  toast(`📥 ${r.added} importada(s) · ${r.dup} duplicada(s)${r.err?' · '+r.err+' com erro':''}`);
+ });
+ app.querySelectorAll('.mon-delaud').forEach(b=>b.addEventListener('click',()=>{
+  const aud=b.dataset.aud;
+  const qt=state.audits.filter(a=>a.auditor===aud).length;
+  if(!confirm(`Apagar TODAS as ${qt} auditoria(s) de "${aud}"?\nEsta ação não pode ser desfeita (faça um backup antes).`))return;
+  state.audits=state.audits.filter(a=>a.auditor!==aud);
+  save();render();
+  toast(`🗑️ ${qt} auditoria(s) de ${aud} apagada(s)`);
+ }));
+ document.getElementById('monEditor').addEventListener('click',()=>{
+  if(state.current){toast('⚠️ Conclua ou cancele a auditoria em andamento antes de editar');return;}
+  screen='editor';render();
+ });
+ document.getElementById('monSetPhone').addEventListener('click',()=>{
+  const atual=monitorPhone();
+  const novo=prompt('Digite o número do WhatsApp do monitor com DDI+DDD, só dígitos.\nEx: 5512987654321'+(atual?'\n\nAtual: +'+atual:''));
+  if(novo===null)return;
+  const dig=novo.replace(/\D/g,'');
+  if(dig&&(dig.length<12||dig.length>13)){toast('⚠️ Use DDI+DDD+número. Ex: 5512987654321');return;}
+  state.monitorPhone=dig;save();render();
+  toast(dig?'📱 Número configurado':'📱 Número removido');
+ });
+ document.getElementById('monChangePin').addEventListener('click',()=>{
+  const atual=prompt('Digite o PIN atual:');
+  if(atual===null)return;
+  if(atual!==state.pin){toast('⛔ PIN atual incorreto');return;}
+  const novo=prompt('Digite o novo PIN (4 a 6 dígitos):');
+  if(novo===null)return;
+  if(!/^\d{4,6}$/.test(novo)){toast('⚠️ O PIN deve ter de 4 a 6 dígitos');return;}
+  state.pin=novo;save();toast('🔑 PIN alterado com sucesso');
+ });
+ document.getElementById('monClear').addEventListener('click',()=>{
+  if(!confirm('Apagar TODAS as auditorias registradas? Esta ação não pode ser desfeita (faça um backup antes).'))return;
+  if(!confirm('Tem certeza absoluta? Todos os resultados e reflexões serão perdidos.'))return;
+  state.audits=[];save();render();toast('🗑️ Auditorias apagadas');
+ });
+ document.getElementById('monBack').addEventListener('click',()=>{screen='home';render();});
+}
+
+/* ============ EDITOR DE ITENS ============ */
+function slugify(s){
+ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,24)||('cat'+Date.now());
+}
+function renderEditor(){
+ if(!monitorUnlocked){screen='home';renderHome();return;}
+ const cats=getCats();
+ let html=`
+  <div class="card"><b>⚙️ Editor de Itens da Auditoria</b>
+  <div style="font-size:.8rem;color:var(--muted);margin-top:4px">Adicione, renomeie ou remova itens e categorias. Toque no botão 🔢/🎯 ao lado de cada item para escolher como ele será avaliado: <b style="color:var(--text)">🔢 Quantidade</b> (conta ocorrências) ou <b style="color:var(--text)">🎯 Nível</b> (Pouco/Médio/Bastante direto). As alterações valem para as próximas auditorias.</div></div>
+
+  <div class="card">
+   <b style="font-size:.9rem">🎚️ Aplicar a todos os itens</b>
+   <div style="font-size:.78rem;color:var(--muted);margin:6px 0 10px">Atalho para definir o mesmo modo em todos os itens de uma vez. Depois ajuste item por item, se quiser.</div>
+   <div class="opts" style="grid-template-columns:1fr 1fr">
+    <button type="button" class="opt" id="modeQtd" style="padding:12px 8px"><b>🔢 Todos por Quantidade</b>0 · 1 · 2 · 3+</button>
+    <button type="button" class="opt" id="modeNivel" style="padding:12px 8px"><b>🎯 Todos por Nível</b>Pouco · Médio · Bastante</button>
+   </div>
+  </div>`;
+ cats.forEach((cat,ci)=>{
+  html+=`<div class="card">
+   <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+    <input type="text" class="ed-catname" data-ci="${ci}" value="${esc(cat.name)}" style="margin-bottom:0;font-weight:700">
+    <button type="button" class="opt ed-delcat" data-ci="${ci}" style="width:44px;flex-shrink:0;color:#ff8a80"><b>🗑️</b></button>
+   </div>`;
+  cat.items.forEach((it,ii)=>{
+   const isQ=it.m==='qtd';
+   html+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+    <input type="text" class="ed-item" data-ci="${ci}" data-ii="${ii}" value="${esc(it.n)}" style="margin-bottom:0">
+    <button type="button" class="opt ed-mode ${isQ?'sel-0':'sel-5'}" data-ci="${ci}" data-ii="${ii}" style="width:64px;flex-shrink:0;padding:8px 2px"><b>${isQ?'🔢':'🎯'}</b>${isQ?'Qtd':'Nível'}</button>
+    <button type="button" class="opt ed-delitem" data-ci="${ci}" data-ii="${ii}" style="width:44px;flex-shrink:0;color:#ff8a80"><b>✕</b></button>
+   </div>`;
+  });
+  html+=`<div style="display:flex;gap:8px;margin-top:8px">
+    <input type="text" class="ed-newitem" data-ci="${ci}" placeholder="Novo item nesta categoria..." style="margin-bottom:0">
+    <button type="button" class="opt ed-additem" data-ci="${ci}" style="width:44px;flex-shrink:0;color:#69f0ae"><b>＋</b></button>
+   </div>
+  </div>`;
+ });
+ html+=`
+  <div class="card">
+   <label class="f">Nova categoria</label>
+   <div style="display:flex;gap:8px">
+    <input type="text" id="edNewCat" placeholder="Ex: Ergonomia" style="margin-bottom:0">
+    <button type="button" class="opt" id="edAddCat" style="width:44px;flex-shrink:0;color:#69f0ae"><b>＋</b></button>
+   </div>
+  </div>`;
+
+ // ===== seção de perguntas de reflexão =====
+ const qs=getQuestions();
+ const TYPE_INFO={radio:{ic:'🔘',lb:'Uma escolha'},check:{ic:'☑️',lb:'Múltipla escolha'},texto:{ic:'✍️',lb:'Resposta livre'}};
+ html+=`<div class="cat-title">🧠 Perguntas de Reflexão <span class="bar"></span></div>`;
+ qs.forEach((q,qi)=>{
+  const ti=TYPE_INFO[q.type];
+  html+=`<div class="card">
+   <div style="font-size:.72rem;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:6px">PERGUNTA ${qi+1}</div>
+   <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+    <textarea class="qe-text" data-qi="${qi}" style="margin-bottom:0;min-height:52px">${esc(q.text)}</textarea>
+    <button type="button" class="opt qe-del" data-qi="${qi}" style="width:44px;flex-shrink:0;color:#ff8a80"><b>🗑️</b></button>
+   </div>
+   <button type="button" class="opt qe-type" data-qi="${qi}" style="width:100%;padding:9px;margin-bottom:8px"><b>${ti.ic} Tipo: ${ti.lb}</b>toque para alternar (uma escolha → múltipla → livre)</button>`;
+  if(q.type!=='texto'){
+   q.options.forEach((o,oi)=>{
+    html+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+     <input type="text" class="qe-opt" data-qi="${qi}" data-oi="${oi}" value="${esc(o)}" style="margin-bottom:0">
+     <button type="button" class="opt qe-delopt" data-qi="${qi}" data-oi="${oi}" style="width:44px;flex-shrink:0;color:#ff8a80"><b>✕</b></button>
+    </div>`;
+   });
+   html+=`<div style="display:flex;gap:8px;margin-top:8px">
+    <input type="text" class="qe-newopt" data-qi="${qi}" placeholder="Nova opção de resposta..." style="margin-bottom:0">
+    <button type="button" class="opt qe-addopt" data-qi="${qi}" style="width:44px;flex-shrink:0;color:#69f0ae"><b>＋</b></button>
+   </div>`;
+  }else{
+   html+=`<div style="font-size:.75rem;color:var(--muted)">Resposta livre: o operador escreve com as próprias palavras.</div>`;
+  }
+  html+=`</div>`;
+ });
+ html+=`
+  <div class="card">
+   <label class="f">Nova pergunta</label>
+   <div style="display:flex;gap:8px">
+    <input type="text" id="qeNewQ" placeholder="Ex: O que você faria diferente amanhã?" style="margin-bottom:0">
+    <button type="button" class="opt" id="qeAddQ" style="width:44px;flex-shrink:0;color:#69f0ae"><b>＋</b></button>
+   </div>
+   <div style="font-size:.72rem;color:var(--muted);margin-top:6px">A pergunta nasce como resposta livre — depois altere o tipo e adicione opções, se quiser.</div>
+  </div>
+  <button type="button" class="btn btn-dark" id="qeReset">↩️ Restaurar perguntas padrão</button>
+
+  <button type="button" class="btn btn-primary" id="edDone">✅ Concluir edição</button>
+  <button type="button" class="btn btn-red" id="edReset">↩️ Restaurar itens padrão</button>
+  <button type="button" class="btn btn-dark" id="edBack">← Voltar ao Painel do Monitor</button>`;
+ app.innerHTML=html;
+
+ // ações em massa: definir modo de todos os itens
+ document.getElementById('modeQtd').addEventListener('click',()=>{
+  if(!confirm('Definir TODOS os itens para o modo Quantidade?'))return;
+  cats.forEach(c=>c.items.forEach(it=>{it.m='qtd';}));
+  state.mode='qtd';save();render();toast('🔢 Todos os itens no modo Quantidade');
+ });
+ document.getElementById('modeNivel').addEventListener('click',()=>{
+  if(!confirm('Definir TODOS os itens para o modo Nível?'))return;
+  cats.forEach(c=>c.items.forEach(it=>{it.m='nivel';}));
+  state.mode='nivel';save();render();toast('🎯 Todos os itens no modo Nível');
+ });
+ // alternar modo de um item específico
+ app.querySelectorAll('.ed-mode').forEach(b=>b.addEventListener('click',()=>{
+  const it=cats[+b.dataset.ci].items[+b.dataset.ii];
+  it.m=it.m==='qtd'?'nivel':'qtd';
+  save();
+  const isQ=it.m==='qtd';
+  b.className='opt ed-mode '+(isQ?'sel-0':'sel-5');
+  b.innerHTML=`<b>${isQ?'🔢':'🎯'}</b>${isQ?'Qtd':'Nível'}`;
+ }));
+
+ // renomear categoria / item (salva ao sair do campo)
+ app.querySelectorAll('.ed-catname').forEach(inp=>inp.addEventListener('change',()=>{
+  const v=inp.value.trim();
+  if(!v){inp.value=cats[inp.dataset.ci].name;return;}
+  cats[+inp.dataset.ci].name=v;save();toast('✏️ Categoria renomeada');
+ }));
+ app.querySelectorAll('.ed-item').forEach(inp=>inp.addEventListener('change',()=>{
+  const ci=+inp.dataset.ci,ii=+inp.dataset.ii;
+  const v=inp.value.trim();
+  if(!v){inp.value=cats[ci].items[ii].n;return;}
+  if(cats[ci].items.some((x,k)=>k!==ii&&x.n.toLowerCase()===v.toLowerCase())){toast('⚠️ Item já existe nesta categoria');inp.value=cats[ci].items[ii].n;return;}
+  cats[ci].items[ii].n=v;save();toast('✏️ Item renomeado');
+ }));
+ // remover item
+ app.querySelectorAll('.ed-delitem').forEach(b=>b.addEventListener('click',()=>{
+  const ci=+b.dataset.ci,ii=+b.dataset.ii;
+  if(cats[ci].items.length<=1){toast('⚠️ A categoria precisa ter ao menos 1 item');return;}
+  if(!confirm(`Remover o item "${cats[ci].items[ii].n}"?`))return;
+  cats[ci].items.splice(ii,1);save();render();toast('🗑️ Item removido');
+ }));
+ // adicionar item
+ app.querySelectorAll('.ed-additem').forEach(b=>b.addEventListener('click',()=>{
+  const ci=+b.dataset.ci;
+  const inp=app.querySelector(`.ed-newitem[data-ci="${ci}"]`);
+  const v=inp.value.trim();
+  if(!v){toast('⚠️ Digite o nome do novo item');return;}
+  if(cats[ci].items.some(x=>x.n.toLowerCase()===v.toLowerCase())){toast('⚠️ Item já existe nesta categoria');return;}
+  cats[ci].items.push({n:v,m:state.mode==='nivel'?'nivel':'qtd'});
+  save();render();toast('✅ Item adicionado');
+ }));
+ // remover categoria
+ app.querySelectorAll('.ed-delcat').forEach(b=>b.addEventListener('click',()=>{
+  const ci=+b.dataset.ci;
+  if(cats.length<=1){toast('⚠️ Deve existir ao menos 1 categoria');return;}
+  if(!confirm(`Remover a categoria "${cats[ci].name}" e todos os seus itens?`))return;
+  cats.splice(ci,1);save();render();toast('🗑️ Categoria removida');
+ }));
+ // nova categoria
+ document.getElementById('edAddCat').addEventListener('click',()=>{
+  const inp=document.getElementById('edNewCat');
+  const v=inp.value.trim();
+  if(!v){toast('⚠️ Digite o nome da categoria');return;}
+  if(cats.some(c=>c.name.toLowerCase()===v.toLowerCase())){toast('⚠️ Categoria já existe');return;}
+  let id=slugify(v);
+  while(cats.some(c=>c.id===id))id+='_2';
+  cats.push({id:id,icon:'📋',name:v,items:[{n:'Novo item',m:state.mode==='nivel'?'nivel':'qtd'}]});
+  save();render();toast('✅ Categoria adicionada');
+ });
+ // ===== handlers das perguntas de reflexão =====
+ app.querySelectorAll('.qe-text').forEach(t=>t.addEventListener('change',()=>{
+  const v=t.value.trim();
+  if(!v){t.value=qs[+t.dataset.qi].text;return;}
+  qs[+t.dataset.qi].text=v;save();toast('✏️ Pergunta atualizada');
+ }));
+ app.querySelectorAll('.qe-type').forEach(b=>b.addEventListener('click',()=>{
+  const q=qs[+b.dataset.qi];
+  q.type=q.type==='radio'?'check':q.type==='check'?'texto':'radio';
+  if(q.type!=='texto'&&!q.options.length)q.options=['Sim','Não'];
+  save();render();
+ }));
+ app.querySelectorAll('.qe-del').forEach(b=>b.addEventListener('click',()=>{
+  const qi=+b.dataset.qi;
+  if(qs.length<=1){toast('⚠️ Deve existir ao menos 1 pergunta');return;}
+  if(!confirm(`Remover a pergunta "${qs[qi].text}"?`))return;
+  qs.splice(qi,1);save();render();toast('🗑️ Pergunta removida');
+ }));
+ app.querySelectorAll('.qe-opt').forEach(inp=>inp.addEventListener('change',()=>{
+  const q=qs[+inp.dataset.qi],oi=+inp.dataset.oi;
+  const v=inp.value.trim();
+  if(!v){inp.value=q.options[oi];return;}
+  if(q.options.some((x,k)=>k!==oi&&x.toLowerCase()===v.toLowerCase())){toast('⚠️ Opção já existe');inp.value=q.options[oi];return;}
+  q.options[oi]=v;save();toast('✏️ Opção atualizada');
+ }));
+ app.querySelectorAll('.qe-delopt').forEach(b=>b.addEventListener('click',()=>{
+  const q=qs[+b.dataset.qi],oi=+b.dataset.oi;
+  if(q.options.length<=2){toast('⚠️ Perguntas de escolha precisam de ao menos 2 opções');return;}
+  q.options.splice(oi,1);save();render();toast('🗑️ Opção removida');
+ }));
+ app.querySelectorAll('.qe-addopt').forEach(b=>b.addEventListener('click',()=>{
+  const q=qs[+b.dataset.qi];
+  const inp=app.querySelector(`.qe-newopt[data-qi="${b.dataset.qi}"]`);
+  const v=inp.value.trim();
+  if(!v){toast('⚠️ Digite a nova opção');return;}
+  if(q.options.some(x=>x.toLowerCase()===v.toLowerCase())){toast('⚠️ Opção já existe');return;}
+  q.options.push(v);save();render();toast('✅ Opção adicionada');
+ }));
+ document.getElementById('qeAddQ').addEventListener('click',()=>{
+  const inp=document.getElementById('qeNewQ');
+  const v=inp.value.trim();
+  if(!v){toast('⚠️ Digite a nova pergunta');return;}
+  qs.push({id:'q'+Date.now(),type:'texto',text:v,options:[]});
+  save();render();toast('✅ Pergunta adicionada');
+ });
+ document.getElementById('qeReset').addEventListener('click',()=>{
+  if(!confirm('Restaurar as 8 perguntas de reflexão padrão? Suas personalizações de perguntas serão perdidas (o histórico é mantido).'))return;
+  state.questions=JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+  save();render();toast('↩️ Perguntas padrão restauradas');
+ });
+
+ document.getElementById('edReset').addEventListener('click',()=>{
+  if(!confirm('Restaurar a lista padrão de itens? Suas personalizações serão perdidas (o histórico de auditorias é mantido).'))return;
+  state.categories=JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+  normCats();
+  save();render();toast('↩️ Itens padrão restaurados');
+ });
+ const goBack=()=>{screen='monitor';render();};
+ document.getElementById('edDone').addEventListener('click',goBack);
+ document.getElementById('edBack').addEventListener('click',goBack);
+}
+
+function renderPreview(){
+ const cur=state.current;
+ if(!cur){screen='home';renderHome();return;}
+ const tot=totalItems();
+ let listHtml='';
+ getCats().forEach(cat=>{
+  listHtml+=`<div class="cat-title">${cat.icon} ${cat.name} <span class="bar"></span><span style="font-size:.72rem;color:var(--muted)">${cat.items.length} itens</span></div>`;
+  cat.items.forEach(it=>{
+   const isQ=it.m==='qtd';
+   listHtml+=`<div class="line l0" style="border-left-color:#3a3a70"><span>${esc(it.n)}</span><span class="tag">${isQ?'🔢 contar':'🎯 nível'}</span></div>`;
+  });
+ });
+ app.innerHTML=`
+  <div class="card">
+   <b>👀 Prepare-se, ${esc(cur.auditor)}!</b>
+   <div style="font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.55">
+   Você vai percorrer o setor como um <b style="color:var(--text)">auditor oficial</b>, observando os <b style="color:var(--text)">${tot} itens</b> abaixo.
+   Leia a lista com calma para saber o que procurar — o cronômetro <b style="color:var(--text)">ainda não está correndo</b> e só inicia quando você tocar em "Começar auditoria".</div>
+  </div>
+  <div class="card" style="font-size:.78rem;color:var(--muted)">
+   <b style="color:var(--text)">Como pontua:</b> você inicia com 100 pontos. Itens <span class="tag">🔢 contar</span> registram a quantidade encontrada (1 = pouco −2 · 2 = médio −5 · 3+ = bastante −10). Itens <span class="tag">🎯 nível</span> você avalia direto: Pouco (−2), Médio (−5) ou Bastante (−10).
+  </div>
+  ${listHtml}
+  <button type="button" class="btn btn-primary" id="btnBeginAudit" style="margin-top:14px">▶️ Começar auditoria (inicia o cronômetro)</button>
+  <button type="button" class="btn btn-dark" id="btnPrevBack">← Voltar</button>`;
+ document.getElementById('btnBeginAudit').addEventListener('click',()=>{
+  cur.startTs=Date.now();
+  save();screen='audit';render();
+  toast('⏱️ Cronômetro iniciado. Boa auditoria!');
+ });
+ document.getElementById('btnPrevBack').addEventListener('click',()=>{
+  state.current=null;save();screen='home';render();
+ });
+}
+
+function renderAudit(){
+ const cur=state.current;
+ if(!cur){screen='home';renderHome();return;}
+ if(!cur.startTs){screen='preview';renderPreview();return;}
+ if(!cur.qty)cur.qty={};
+ const c=calc(cur.answers,cur.qty);
+ const done=answeredCount(cur.answers),tot=totalItems();
+ const modeQtd=state.mode!=='nivel';
+ let html=`
+  <div class="scorehead">
+   <div class="scorepill">
+    <span>👤 ${esc(cur.auditor)}</span>
+    <span class="timerbox" id="auditTimer">${fmtTime(Date.now()-cur.startTs)}</span>
+    <span class="sc" style="color:${classify(c.score).color}">${c.score} pts</span>
+   </div>
+   <div class="progressbar"><div style="width:${Math.round(done/tot*100)}%"></div></div>
+   <div style="font-size:.72rem;color:var(--muted);text-align:right">${done}/${tot} itens avaliados</div>
+  </div>
+  <div class="card" style="font-size:.78rem;color:var(--muted)">Itens com <b style="color:var(--text)">− / ＋</b>: registre a quantidade (0 · 1 = pouco −2 · 2 = médio −5 · 3+ = bastante −10). Itens com <b style="color:var(--text)">botões</b>: escolha o nível observado.</div>`;
+ getCats().forEach(cat=>{
+  html+=`<div class="cat-title">${cat.icon} ${cat.name} <span class="bar"></span></div>`;
+  cat.items.forEach(it=>{
+   const key=cat.id+'|'+it.n;
+   const touched=cur.answers[key]!==undefined;
+   if(it.m==='qtd'){
+    const q=cur.qty[key]||0;
+    const lb=touched?qtyLabel(q):{t:'Toque − ou + para avaliar',c:''};
+    html+=`<div class="item"><div class="nm">${esc(it.n)}</div>
+     <div class="qtyrow" data-key="${esc(key)}">
+      <button type="button" class="qbtn qminus">−</button>
+      <div class="qval">${touched?q:'–'}</div>
+      <button type="button" class="qbtn qplus">＋</button>
+      <div class="qlbl ${lb.c}">${lb.t}</div>
+     </div></div>`;
+   }else{
+    const sel=cur.answers[key];
+    html+=`<div class="item"><div class="nm">${esc(it.n)}</div><div class="opts">`;
+    LEVELS.forEach(L=>{
+     const on=touched&&sel===L.v?` sel-${L.v}`:'';
+     html+=`<button type="button" class="opt${on}" data-key="${esc(key)}" data-v="${L.v}"><b>${L.s}</b>${L.l}</button>`;
+    });
+    html+=`</div></div>`;
+   }
+  });
+ });
+ html+=`
+  <button type="button" class="btn btn-primary" id="btnFinishAudit" style="margin-top:14px">✅ Concluir auditoria e refletir</button>
+  <button type="button" class="btn btn-red" id="btnCancelAudit">✕ Cancelar auditoria</button>`;
+ app.innerHTML=html;
+
+ function refreshHead(){
+  const cc=calc(cur.answers,cur.qty);
+  const pill=document.querySelector('.scorepill .sc');
+  if(pill){pill.textContent=cc.score+' pts';pill.style.color=classify(cc.score).color;}
+  const dn=answeredCount(cur.answers);
+  const pb=document.querySelector('.progressbar>div');
+  if(pb)pb.style.width=Math.round(dn/tot*100)+'%';
+  const cnt=document.querySelector('.scorehead div[style*="text-align:right"]');
+  if(cnt)cnt.textContent=dn+'/'+tot+' itens avaliados';
+ }
+ function setQty(row,q){
+  const key=row.dataset.key;
+  q=Math.max(0,Math.min(99,q));
+  cur.qty[key]=q;
+  cur.answers[key]=qtyToPenalty(q);
+  save();
+  const lb=qtyLabel(q);
+  row.querySelector('.qval').textContent=q;
+  const lbl=row.querySelector('.qlbl');
+  lbl.className='qlbl '+lb.c;
+  lbl.textContent=lb.t;
+  refreshHead();
+ }
+ /* itens por quantidade */
+ app.querySelectorAll('.qtyrow').forEach(row=>{
+  const key=row.dataset.key;
+  row.querySelector('.qplus').addEventListener('click',()=>{
+   const touched=cur.answers[key]!==undefined;
+   const q=touched?(cur.qty[key]||0):0;
+   setQty(row,q+1);
+  });
+  row.querySelector('.qminus').addEventListener('click',()=>{
+   const touched=cur.answers[key]!==undefined;
+   const q=touched?(cur.qty[key]||0):0;
+   /* primeiro toque em − marca explicitamente "não encontrado" (0) */
+   setQty(row,touched?Math.max(0,q-1):0);
+  });
+ });
+ /* itens por nível */
+ app.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+  const key=b.dataset.key;
+  cur.answers[key]=parseInt(b.dataset.v,10);
+  delete cur.qty[key]; /* modo nível não registra quantidade */
+  save();
+  const group=b.parentElement.querySelectorAll('.opt');
+  group.forEach(g=>{g.className='opt';});
+  b.className='opt sel-'+b.dataset.v;
+  refreshHead();
+ }));
+
+ document.getElementById('btnFinishAudit').addEventListener('click',()=>{
+  if(answeredCount(cur.answers)<tot){
+   if(!confirm('Ainda existem itens não avaliados (serão considerados "Não encontrado"). Deseja concluir mesmo assim?'))return;
+  }
+  screen='reflect';render();
+ });
+ document.getElementById('btnCancelAudit').addEventListener('click',()=>{
+  if(confirm('Cancelar esta auditoria? Os dados serão descartados.')){
+   state.current=null;save();screen='home';render();
+  }
+ });
+ timerInt=setInterval(()=>{
+  const el=document.getElementById('auditTimer');
+  if(el&&state.current)el.textContent=fmtTime(Date.now()-state.current.startTs);
+ },1000);
+}
+
+function renderReflect(){
+ const cur=state.current;
+ if(!cur){screen='home';renderHome();return;}
+ const r=cur.reflections;
+ const qs=getQuestions();
+ let html=`
+  <div class="card"><b>🧠 Perguntas de Reflexão</b><div style="font-size:.8rem;color:var(--muted);margin-top:4px">O objetivo não é encontrar culpados, mas desenvolver o olhar crítico e a responsabilidade compartilhada.</div></div>`;
+ qs.forEach((q,qi)=>{
+  html+=`<div class="card"><div class="nm" style="font-weight:600;margin-bottom:8px">${qi+1}. ${esc(q.text)}</div>`;
+  if(q.type==='radio'){
+   html+=q.options.map(o=>`<label class="radio-line"><input type="radio" name="${esc(q.id)}" value="${esc(o)}" ${r[q.id]===o?'checked':''}><span>${esc(o)}</span></label>`).join('');
+  }else if(q.type==='check'){
+   html+=q.options.map(o=>`<label class="check-line"><input type="checkbox" name="${esc(q.id)}" value="${esc(o)}" ${(r[q.id]||[]).includes(o)?'checked':''}><span>${esc(o)}</span></label>`).join('');
+  }else{
+   html+=`<textarea class="rf-text" data-qid="${esc(q.id)}" placeholder="Resposta livre...">${esc(r[q.id]||'')}</textarea>`;
+  }
+  html+=`</div>`;
+ });
+ html+=`
+  <button type="button" class="btn btn-primary" id="btnSubmitReflect">🏁 Finalizar e ver resultado</button>
+  <button type="button" class="btn btn-dark" id="btnBackAudit">← Voltar para a auditoria</button>`;
+ app.innerHTML=html;
+
+ function collect(){
+  qs.forEach(q=>{
+   if(q.type==='radio'){
+    const sel=app.querySelector(`input[name="${q.id}"]:checked`);
+    if(sel)r[q.id]=sel.value;
+   }else if(q.type==='check'){
+    r[q.id]=Array.from(app.querySelectorAll(`input[name="${q.id}"]:checked`)).map(c=>c.value);
+   }else{
+    const t=app.querySelector(`.rf-text[data-qid="${q.id}"]`);
+    if(t)r[q.id]=t.value;
+   }
+  });
+ }
+ app.querySelectorAll('input[type=radio],input[type=checkbox],textarea').forEach(el=>{
+  el.addEventListener('change',()=>{collect();save();});
+ });
+
+ document.getElementById('btnSubmitReflect').addEventListener('click',()=>{
+  collect();
+  const c=calc(cur.answers,cur.qty||{});
+  const audit={id:cur.id,auditor:cur.auditor,sub:cur.sub,date:new Date().toISOString(),durationMs:Date.now()-cur.startTs,answers:cur.answers,qty:cur.qty||{},reflections:r,score:c.score,lost:c.lost,nc:c.nc,crits:c.crits};
+  state.audits.push(audit);
+  state.current=null;
+  save();
+  resultAudit=audit;screen='result';render();
+  toast('✅ Auditoria registrada');
+ });
+ document.getElementById('btnBackAudit').addEventListener('click',()=>{screen='audit';render();});
+}
+
+function renderResult(){
+ const a=resultAudit;
+ if(!a){screen='home';renderHome();return;}
+ const cl=classify(a.score);
+ const critHtml=a.crits.length?a.crits.map(c=>`<div class="crit"><span>${esc(c.item)}${c.qty?` <b>· ${c.qty}x</b>`:''} <span class="tag">${esc(c.cat)}</span></span><b style="color:#ff8a80">-${c.v}</b></div>`).join(''):'<div style="color:var(--muted);font-size:.85rem">Nenhum item crítico (médio/bastante) encontrado. 👏</div>';
+ app.innerHTML=`
+  <div class="card result-big">
+   <div class="pts" style="color:${cl.color}">${a.score}</div>
+   <div class="cls"><span class="sem" style="background:${cl.color}"></span>${cl.emoji} ${cl.name}</div>
+   <div class="desc">${cl.desc}</div>
+  </div>
+  <div class="kpis">
+   <div class="kpi"><div class="ic">👤</div><div class="val" style="font-size:.95rem;padding-top:8px">${esc(a.auditor)}</div><div class="lbl">Auditor</div></div>
+   <div class="kpi"><div class="ic">⚠️</div><div class="val">${a.nc}</div><div class="lbl">Não conformidades</div></div>
+   <div class="kpi"><div class="ic">📉</div><div class="val">-${a.lost}</div><div class="lbl">Pontos perdidos</div></div>
+   <div class="kpi"><div class="ic">⏱️</div><div class="val" style="font-size:1.1rem;padding-top:6px">${fmtTime(a.durationMs)}</div><div class="lbl">Tempo</div></div>
+  </div>
+  <div class="cat-title">🚨 Itens mais críticos <span class="bar"></span></div>
+  ${critHtml}
+  <div style="margin-top:14px">
+   <button type="button" class="btn btn-green" id="btnShareResult">📲 Enviar resultado no WhatsApp</button>
+   <button type="button" class="btn btn-primary" id="btnHome">🏠 Voltar ao início</button>
+  </div>`;
+ document.getElementById('btnHome').addEventListener('click',()=>{screen='home';render();});
+ document.getElementById('btnShareResult').addEventListener('click',()=>shareWhats(a));
+}
+
+/* ============ WHATSAPP ============ */
+function shareWhats(a){
+ let audit=a;
+ if(!audit){
+  if(!state.audits.length){toast('⚠️ Nenhuma auditoria para compartilhar');return;}
+  audit=state.audits[state.audits.length-1];
+ }
+ const cl=classify(audit.score);
+ let msg=`🔍 *AUDITORIA HOUSEKEEPING – FAHRWERK*\n`+
+  `━━━━━━━━━━━━━━━\n`+
+  `👤 Auditor: ${audit.auditor}\n`+
+  (audit.sub?`📍 Sub-setor: ${audit.sub}\n`:'')+
+  `📅 ${new Date(audit.date).toLocaleDateString('pt-BR')} · ⏱️ ${fmtTime(audit.durationMs)}\n`+
+  `━━━━━━━━━━━━━━━\n`+
+  `🎯 *Pontuação: ${audit.score}/100*\n`+
+  `${cl.emoji} Classificação: *${cl.name}*\n`+
+  `⚠️ Não conformidades: ${audit.nc}\n`;
+ if(audit.crits.length){
+  msg+=`\n🚨 *Itens críticos:*\n`+audit.crits.slice(0,5).map(c=>`• ${c.item}${c.qty?` (${c.qty}x, -${c.v})`:` (-${c.v})`}`).join('\n')+'\n';
+ }
+ msg+=`\n_Simulador de Auditoria – 2º Turno_\n\n`;
+ /* código compacto para o monitor importar no painel */
+ try{
+  const payload={id:audit.id,auditor:audit.auditor,sub:audit.sub,date:audit.date,durationMs:audit.durationMs,answers:audit.answers,qty:audit.qty||{},reflections:audit.reflections||{},score:audit.score,lost:audit.lost,nc:audit.nc,crits:audit.crits};
+  msg+=`📦 Código do monitor (não apague):\nHK1|${b64enc(JSON.stringify(payload))}`;
+ }catch(e){}
+ window.open(waUrl(msg),'_blank');
+}
+
+/* ============ BACKUP / ATUALIZAR ============ */
+function bindCommon(){
+ const bA=document.getElementById('btnAtualizar');
+ if(bA)bA.addEventListener('click',()=>document.getElementById('fileInput').click());
+ const bB=document.getElementById('btnBackup');
+ if(bB)bB.addEventListener('click',openBackup);
+ const bW=document.getElementById('btnWhats');
+ if(bW)bW.addEventListener('click',()=>shareWhats(null));
+}
+
+function mergeAudits(imported){
+ if(!imported||!Array.isArray(imported.audits))return 0;
+ const ids=new Set(state.audits.map(a=>a.id));
+ let added=0;
+ imported.audits.forEach(a=>{if(a&&a.id&&!ids.has(a.id)){state.audits.push(a);added++;}});
+ state.audits.sort((x,y)=>new Date(x.date)-new Date(y.date));
+ return added;
+}
+
+document.getElementById('fileInput').addEventListener('change',function(){
+ const f=this.files[0];this.value='';
+ if(!f)return;
+ const rd=new FileReader();
+ rd.onload=()=>{
+  try{
+   const d=JSON.parse(rd.result);
+   const added=mergeAudits(d);
+   save();render();
+   toast(`Atualizado às ${nowHMS()} · ${added} nova(s)`);
+  }catch(e){toast('⚠️ Arquivo .json inválido');}
+ };
+ rd.readAsText(f);
+});
+
+function openBackup(){
+ const m=document.getElementById('backupModal');
+ let size=0;
+ try{size=(localStorage.getItem(STORAGE_KEY)||'').length;}catch(e){}
+ const kb=(size/1024).toFixed(1);
+ const pct=Math.min(100,Math.max(2,size/5000000*100));
+ document.getElementById('storFill').style.width=pct+'%';
+ document.getElementById('storInfo').textContent=`localStorage: ${kb} KB · ${state.audits.length} auditoria(s)`;
+ document.getElementById('storWarn').style.display=state.lastBackup?'none':'block';
+ m.classList.add('open');
+}
+document.getElementById('closeBackup').addEventListener('click',()=>document.getElementById('backupModal').classList.remove('open'));
+document.getElementById('backupModal').addEventListener('click',e=>{if(e.target.id==='backupModal')e.target.classList.remove('open');});
+
+document.getElementById('btnExportJson').addEventListener('click',()=>{
+ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='housekeeping_fahrwerk_'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(a);a.click();document.body.removeChild(a);
+ setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ state.lastBackup=new Date().toISOString();save();
+ toast('💾 Backup exportado');
+});
+document.getElementById('btnSaveDevice').addEventListener('click',()=>{
+ try{
+  localStorage.setItem(DEVICE_KEY,JSON.stringify(state));
+  state.lastBackup=new Date().toISOString();save();
+  toast('📦 Salvo no dispositivo');
+ }catch(e){toast('⚠️ Espaço insuficiente no dispositivo');}
+});
+document.getElementById('btnRestoreFile').addEventListener('click',()=>document.getElementById('restoreInput').click());
+document.getElementById('restoreInput').addEventListener('change',function(){
+ const f=this.files[0];this.value='';
+ if(!f)return;
+ const rd=new FileReader();
+ rd.onload=()=>{
+  try{
+   const d=JSON.parse(rd.result);
+   if(!d||d.version!==1||!Array.isArray(d.audits))throw new Error('formato');
+   if(!confirm(`Restaurar backup com ${d.audits.length} auditoria(s)? Os dados atuais serão substituídos.`))return;
+   state=Object.assign({version:1,audits:[],current:null,lastBackup:null,categories:null,mode:'qtd',questions:null,pin:'1234'},d);
+   afterRestore();save();document.getElementById('backupModal').classList.remove('open');
+   screen=state.current?'audit':'home';render();
+   toast('✅ Backup restaurado');
+  }catch(e){toast('⚠️ Arquivo .json inválido');}
+ };
+ rd.readAsText(f);
+});
+document.getElementById('btnRestoreDevice').addEventListener('click',()=>{
+ try{
+  const raw=localStorage.getItem(DEVICE_KEY);
+  if(!raw){toast('⚠️ Nenhum backup no dispositivo');return;}
+  const d=JSON.parse(raw);
+  if(!confirm(`Restaurar backup do dispositivo com ${(d.audits||[]).length} auditoria(s)?`))return;
+  state=Object.assign({version:1,audits:[],current:null,lastBackup:null,categories:null,mode:'qtd',questions:null,pin:'1234'},d);
+  afterRestore();save();document.getElementById('backupModal').classList.remove('open');
+  screen=state.current?'audit':'home';render();
+  toast('✅ Restaurado do dispositivo');
+ }catch(e){toast('⚠️ Backup do dispositivo inválido');}
+});
+
+/* ============ RELÓGIO ============ */
+setInterval(()=>{document.getElementById('clock').textContent=nowHMS();},1000);
+document.getElementById('clock').textContent=nowHMS();
+
+/* ============ INIT ============ */
+load();
+render();
+</script>
+</body>
+</html>
