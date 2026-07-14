@@ -140,10 +140,10 @@ function waUrl(text){
 }
 
 const DEFAULT_CATEGORIES=[{"id":"limpeza","icon":"🧹","name":"Limpeza","items":[{"n":"Parafusos e porcas no chão","m":"nivel"},{"n":"Tampinhas no chão","m":"nivel"},{"n":"Tampões no chão","m":"nivel"},{"n":"Papel no chão","m":"nivel"},{"n":"Lixo","m":"nivel"},{"n":"Sujeira","m":"nivel"},{"n":"Óleo","m":"qtd"},{"n":"Goteiras","m":"qtd"},{"n":"Peças abandonadas","m":"qtd"},{"n":"Mesa do café","m":"nivel"},{"n":"Mesa do refugo","m":"nivel"},{"n":"skillits","m":"nivel"},{"n":"Mesa da ficha","m":"nivel"},{"n":"Ventiladores","m":"nivel"},{"n":"Prateleiras","m":"nivel"},{"n":"Microondas","m":"nivel"}]},{"id":"organizacao","icon":"📦","name":"Organização","items":[{"n":"Ferramentas fora do local","m":"qtd"},{"n":"Objetos sobre prateleiras e caixas de peças","m":"qtd"},{"n":"Copos","m":"qtd"},{"n":"Garrafas","m":"qtd"},{"n":"Luvas","m":"qtd"},{"n":"Potes","m":"qtd"},{"n":"Celular carregando","m":"qtd"},{"n":"Lanches em locais inapropriado","m":"qtd"}]},{"id":"seguranca","icon":"🦺","name":"Segurança","items":[{"n":"Objetos com risco de tropeço","m":"qtd"},{"n":"Óleo no chão","m":"qtd"},{"n":"Uso de celular","m":"qtd"},{"n":"Cabelo comprido solto","m":"qtd"}]},{"id":"padronizacao","icon":"📐","name":"Padronização (desvios)","items":[{"n":"Posto desorganizado","m":"nivel"},{"n":"Materiais não identificados","m":"nivel"},{"n":"Equipamentos sujos","m":"nivel"},{"n":"Padrão de organização faixas no chão","m":"nivel"}]}];
-function getCats(){return state.categories&&state.categories.length?state.categories:DEFAULT_CATEGORIES;}
-
 /* Perguntas de reflexão padrão — tipos: 'radio' (uma escolha), 'check' (múltipla escolha), 'texto' (resposta livre) */
 const DEFAULT_QUESTIONS=[{"id":"q1","type":"radio","text":"Quem você acredita ser o principal responsável pelos deméritos encontrados?","options":["A fábrica","O método de trabalho","Os operadores da operação","A liderança","Todos que trabalham na área","Não existe um culpado; todos somos responsáveis"]},{"id":"q2","type":"radio","text":"A maioria desses problemas poderia ter sido evitada?","options":["Sim","Não"]},{"id":"q3","type":"radio","text":"Se você trabalhasse nesta operação, deixaria o posto dessa maneira?","options":["Sim","Não"]},{"id":"q4","type":"radio","text":"Pequenas atitudes individuais podem impactar uma auditoria?","options":["Sim","Não"]},{"id":"q5","type":"texto","text":"O que mais chamou sua atenção durante a auditoria?","options":[]},{"id":"q6","type":"texto","text":"Qual foi o maior problema encontrado?","options":[]},{"id":"q7","type":"texto","text":"O que faria imediatamente para melhorar este setor?","options":[]},{"id":"q8","type":"check","text":"Manter um bom Housekeeping melhora:","options":["Segurança","Qualidade","Produtividade","Ergonomia","Clima da equipe","Todos os itens acima"]},{"id":"q1783771644896","type":"radio","text":"Housekeeping é importante?","options":["Sim","Não"]},{"id":"q1783771812595","type":"radio","text":"Qual o seu nível de comprometimento com o housekeeping?","options":["Baixo","Médio","Alto"]},{"id":"q1783771961959","type":"radio","text":"Qual avaliação vc faz do Housekeeping auditado no setor ?","options":["Ruim","Bom","Ótimo"]},{"id":"q1783772161158","type":"radio","text":"Qual foi o rigor do seu nível como auditor?","options":["Superficial","Adequada","Rigorosa"]},{"id":"q1783773064386","type":"radio","text":"Na sua avaliação, qual seria o resultado da auditoria?","options":["Aprovado","Aprovado, com melhorias a ser feitas","Reprovado"]},{"id":"q1783774896664","type":"radio","text":"Qual foi sua experiencia auditando o setor?","options":["Regular","Boa","Gostei da experiencia"]}];
+function getCats(){return state.categories&&state.categories.length?state.categories:DEFAULT_CATEGORIES;}
+
 function getQuestions(){return state.questions&&state.questions.length?state.questions:DEFAULT_QUESTIONS;}
 function afterRestore(){
  if(!state.categories||!state.categories.length){
@@ -549,6 +549,15 @@ function renderEditor(){
   </div>
   <button type="button" class="btn btn-dark" id="qeReset">↩️ Restaurar perguntas padrão</button>
 
+  <div class="cat-title">🌐 Publicar / transferir configuração <span class="bar"></span></div>
+  <div class="card">
+   <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">Depois de editar itens e perguntas, use as opções abaixo para <b style="color:var(--text)">atualizar a página do GitHub</b> ou levar a configuração para outro celular.</div>
+   <button type="button" class="btn btn-primary" id="cfgGithub">📋 Copiar código para o GitHub</button>
+   <div style="font-size:.72rem;color:var(--muted);margin:-4px 0 10px">Copia as 2 linhas de configuração. No GitHub (lápis), localize as linhas que começam com <b style="color:var(--text)">const DEFAULT_CATEGORIES=</b> e <b style="color:var(--text)">const DEFAULT_QUESTIONS=</b> (uma embaixo da outra), apague as duas e cole no lugar.</div>
+   <button type="button" class="btn" id="cfgShare" style="background:var(--green);color:#00300f">📲 Enviar configuração (WhatsApp)</button>
+   <button type="button" class="btn btn-dark" id="cfgImport">📥 Receber configuração (colar código)</button>
+  </div>
+
   <button type="button" class="btn btn-primary" id="edDone">✅ Concluir edição</button>
   <button type="button" class="btn btn-red" id="edReset">↩️ Restaurar itens padrão</button>
   <button type="button" class="btn btn-dark" id="edBack">← Voltar ao Painel do Monitor</button>`;
@@ -672,6 +681,47 @@ function renderEditor(){
   if(!confirm('Restaurar as 8 perguntas de reflexão padrão? Suas personalizações de perguntas serão perdidas (o histórico é mantido).'))return;
   state.questions=JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
   save();render();toast('↩️ Perguntas padrão restauradas');
+ });
+
+ // ===== publicar / transferir configuração =====
+ function copyText(txt,okMsg){
+  const ta=document.createElement('textarea');
+  ta.value=txt;document.body.appendChild(ta);ta.select();
+  try{
+   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt);}
+   else{document.execCommand('copy');}
+   toast(okMsg);
+  }catch(e){toast('⚠️ Não foi possível copiar automaticamente');}
+  document.body.removeChild(ta);
+ }
+ document.getElementById('cfgGithub').addEventListener('click',()=>{
+  const code='const DEFAULT_CATEGORIES='+JSON.stringify(getCats())+';\n'
+   +'/* Perguntas de reflexão padrão — tipos: radio (uma escolha), check (múltipla), texto (livre) */\n'
+   +'const DEFAULT_QUESTIONS='+JSON.stringify(getQuestions())+';';
+  copyText(code,'📋 Código copiado! Cole no GitHub no lugar das 2 linhas const DEFAULT_...');
+ });
+ document.getElementById('cfgShare').addEventListener('click',()=>{
+  const payload={categories:getCats(),questions:getQuestions(),mode:state.mode};
+  const msg='⚙️ *Configuração – Auditoria Housekeeping Fahrwerk*\n'
+   +'Para aplicar: Painel do Monitor → Editar → Receber configuração.\n\n'
+   +'HKCFG1|'+b64enc(JSON.stringify(payload));
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+ });
+ document.getElementById('cfgImport').addEventListener('click',()=>{
+  const txt=prompt('Cole aqui o código de configuração (mensagem com "HKCFG1|"):');
+  if(txt===null)return;
+  const m=/HKCFG1\|([A-Za-z0-9+/=]+)/.exec(txt);
+  if(!m){toast('⚠️ Código "HKCFG1|" não encontrado');return;}
+  try{
+   const cfg=JSON.parse(b64dec(m[1]));
+   if(!cfg||!Array.isArray(cfg.categories)||!Array.isArray(cfg.questions))throw new Error('inválido');
+   if(!confirm('Aplicar esta configuração? Ela substitui os itens e perguntas atuais deste aparelho (o histórico de auditorias é mantido).'))return;
+   state.categories=cfg.categories;
+   state.questions=cfg.questions;
+   if(cfg.mode==='qtd'||cfg.mode==='nivel')state.mode=cfg.mode;
+   normCats();ensureQuestions();
+   save();render();toast('✅ Configuração aplicada');
+  }catch(e){toast('⚠️ Código inválido ou incompleto');}
  });
 
  document.getElementById('edReset').addEventListener('click',()=>{
